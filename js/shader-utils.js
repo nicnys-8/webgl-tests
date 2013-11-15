@@ -57,7 +57,7 @@ ShaderUtils.getShaderProgram = function(input) {
     shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
     gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
     
-    shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
+    shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
     gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
     
     shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
