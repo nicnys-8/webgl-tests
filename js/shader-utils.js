@@ -37,8 +37,7 @@ ShaderUtils.getShader = function(gl, id) {
 }
 
 ShaderUtils.getShaderProgram = function(input) {
-    //var fragmentShader = getShader(gl, "shader-fs");
-    //var vertexShader = getShader(gl, "shader-vs");
+
     var gl = input.gl;
     var fragmentShader = ShaderUtils.getShader(gl, input.fragmentShader);
     var vertexShader = ShaderUtils.getShader(gl, input.vertexShader);

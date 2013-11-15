@@ -2,11 +2,11 @@
 <html>
 
 <head>
-<title>Learning WebGL &mdash; lesson 1</title>
-<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<title>Nicke's WebGL</title>
 
+<script type="text/javascript" src="js/lib/webgl-utils.js"></script>
 <script type="text/javascript" src="js/lib/glMatrix-0.9.5.min.js"></script>
-<script type="text/javascript" src="js/shader-utils.js"></script>
+
 
 <!------------->
 <!-- Shaders -->
@@ -48,9 +48,6 @@
     
     var triangleVertexPositionBuffer;
     var triangleVertexColorBuffer;;
-    
-    // Check if shader-utils.js is loaded
-    console.log(ShaderUtils);
     
     function initGL(canvas) {
         try {
@@ -108,20 +105,44 @@
         gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
         gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, triangleVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
         
-        ////////
         gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
         gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, triangleVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
-        ///////
         
         setMatrixUniforms();
         gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
     }
+    
+    ///JOO!!!!!
+    function getShaderString(id) {
+        var shaderScript = document.getElementById(id);
+        if (!shaderScript) {
+            return null;
+        }
+        
+        var str = "";
+        var k = shaderScript.firstChild;
+        while (k) {
+            if (k.nodeType == 3)
+            str += k.textContent;
+            k = k.nextSibling;
+        }
+        return  str;
+    }
 
     function webGLStart() {
-        var canvas = document.getElementById("lesson01-canvas");
+        var canvas = document.getElementById("canvas");
         initGL(canvas);
-        var shaderInput = {gl: gl, vertexShader: "shader-vs", fragmentShader: "shader-fs"};
-        shaderProgram = ShaderUtils.getShaderProgram(shaderInput);
+        
+        
+        //var shaderInput = {gl: gl, vertexShader: "shader-vs", fragmentShader: "shader-fs"};
+        
+        //shaderProgram = ShaderUtils.getShaderProgram(shaderInput);
+        
+        console.log(1);
+        WebGLUtils.createProgram();
+        shaderProgram = WebGLUtils.createProgram(gl, getShaderString("shader-vs"), getShaderString("shader-fs"));
+        console.log(3);
+        
         initBuffers();
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.enable(gl.DEPTH_TEST);
@@ -133,7 +154,7 @@
 
 
 <body onload="webGLStart();">
-    <canvas id="lesson01-canvas" style="border: none;" width="500" height="500">
+    <canvas id="canvas" style="border: none;" width="500" height="500">
     </canvas>
 </body>
 
