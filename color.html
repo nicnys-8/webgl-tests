@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        <title>Nicke's WebGL</title>
+        
+        <script type="text/javascript" src="js/lib/webgl-utils.js"></script>
+        <script type="text/javascript" src="js/lib/glMatrix-0.9.5.min.js"></script>
+        
+        
+        <!------------->
+        <!-- Shaders -->
+        <!------------->
+        <script id="shader-vs" type="x-shader/x-vertex">
+            attribute vec3 aVertexPosition;
+            attribute vec4 aVertexColor;
+            
+            uniform mat4 uMVMatrix;
+            uniform mat4 uPMatrix;
+            
+            varying vec4 vColor;
+            
+            void main(void) {
+                gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+                vColor = aVertexColor;
+            }
+        </script>
+        
+        <script id="shader-fs" type="x-shader/x-fragment">
+            precision mediump float;
+            varying vec4 vColor;
+            
+            void main(void) {
+                gl_FragColor = vColor;
+            }
+        </script>
+        
+        <!---------------->
+        <!-- JavaScript -->
+        <!---------------->
+        <script type="text/javascript">
+            // Global variables
+            var gl;
+            var shaderProgram;
+            
+            var mvMatrix = mat4.create();
+            var pMatrix = mat4.create();
+            
+            var vertexPositionBuffer;
+            var vertexColorBuffer;;
+            
+            function setMatrixUniforms() {
+                gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
+                gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+            }
+        
+        function initBuffers() {
+            vertexPositionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+            var vertices = [];
+            
+            vertices[0] = 0.0;
+            vertices[1] = 0.0;
+            vertices[2] = 0.0;
+            
+            var x, y, j, angle;
+            var corners = 10;
+            for (var i = 0; i <= corners; i ++) {
+                j = 3 * i;
+                angle = i * 2 * Math.PI / corners + Math.PI / 2;
+                x = Math.cos(angle);
+                y = Math.sin(angle);
+                
+                if (i % 2 != 0) {
+                    x = x * 0.4;
+                    y = y * 0.4;
+                }
+            	vertices[3 + j + 0] = x;
+                vertices[3 + j + 1] = y;
+                vertices[3 + j + 2] = 1.0;
+            }
+            
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+            vertexPositionBuffer.itemSize = 3;
+            // vertexPositionBuffer.numItems = 4;
+                            
+            vertexPositionBuffer.numItems = vertices.length / vertexPositionBuffer.itemSize;
+                            
+            vertexColorBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
+            
+            var colors = [];
+            var j;
+            
+            // Set the color of the middle vertex
+            colors[0] = 1.0;
+            colors[1] = 1.0;
+            colors[2] = 1.0;
+            colors[3] = 1.0;
+            
+            // Set the color of the outer vertices
+            for (var i = 1; i < vertices.length / 3; i++) {
+                j = i * 4;
+                colors[j + 0] = (i % 2 == 0) ? 1.0 : 0.0;
+                colors[j + 1] = (i % 2 == 0) ? 0.0 : 1.0;
+                colors[j + 2] = 1;
+                colors[j + 3] = 1.0;
+            }
+            
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+            vertexColorBuffer.itemSize = 4;
+            vertexColorBuffer.numItems = colors.length / vertexColorBuffer.itemSize;
+        }
+        
+        
+        function drawScene() {
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            
+            var canvas = document.getElementById("canvas");
+            mat4.perspective(45, canvas.width / canvas.height, 0.1, 100.0, pMatrix);
+            
+            mat4.identity(mvMatrix);
+            
+            mat4.translate(mvMatrix, [0, 0.0, -5.0]);
+        	//mat4.rotate(mvMatrix, Math.PI/9, [0, 1, 0]);
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+            gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+        
+        
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
+            gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, vertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+            
+            setMatrixUniforms();
+            
+            gl.drawArrays(gl.TRIANGLE_FAN, 0, vertexPositionBuffer.numItems);
+        }
+        
+        function webGLStart() {
+            var canvas = document.getElementById("canvas");
+            
+            gl = WebGLUtils.setupWebGL(canvas);
+            
+            var vstr = WebGLUtils.shaderScriptToString("shader-vs");
+            var fstr = WebGLUtils.shaderScriptToString("shader-fs");
+            
+            shaderProgram = WebGLUtils.createProgram(gl, vstr, fstr);
+            
+            gl.useProgram(shaderProgram);
+            
+            shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+            gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+  
+            shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
+            gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
+
+			shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+            shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+            initBuffers();
+            
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.enable(gl.DEPTH_TEST);
+            
+            drawScene();
+        }
+        </script>
+    </head>
+    
+    <body onload="webGLStart();">
+        <canvas id="canvas" style="border: none;" width="500" height="500">
+        </canvas>
+    </body>
+    
+</html>

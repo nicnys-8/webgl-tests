@@ -1,5 +1,3 @@
-console.log("WebGLUtils is loading...");
-
 /*
  * Copyright 2010, Google Inc.
  * All rights reserved.
@@ -63,186 +61,205 @@ console.log("WebGLUtils is loading...");
  */
 
 WebGLUtils = function() {
-    /**
-     * Creates the HTML for a failure message
-     * @param {string} canvasContainerId id of container of th
-     *        canvas.
-     * @return {string} The html.
-     */
-    var makeFailHTML = function(msg) {
-        return '' +
-        '<table style="background-color: #8CE; width: 100%; height: 100%;"><tr>' +
-        '<td align="center">' +
-        '<div style="display: table-cell; vertical-align: middle;">' +
-        '<div style="">' + msg + '</div>' +
-        '</div>' +
-        '</td></tr></table>';
-    };
+
+/**
+ * Creates the HTML for a failure message
+ * @param {string} canvasContainerId id of container of th
+ *        canvas.
+ * @return {string} The html.
+ */
+var makeFailHTML = function(msg) {
+  return '' +
+    '<table style="background-color: #8CE; width: 100%; height: 100%;"><tr>' +
+    '<td align="center">' +
+    '<div style="display: table-cell; vertical-align: middle;">' +
+    '<div style="">' + msg + '</div>' +
+    '</div>' +
+    '</td></tr></table>';
+};
+
+/**
+ * Message for getting a webgl browser
+ * @type {string}
+ */
+var GET_A_WEBGL_BROWSER = '' +
+  'This page requires a browser that supports WebGL.<br/>' +
+  '<a href="http://get.webgl.org">Click here to upgrade your browser.</a>';
+
+/**
+ * Message for need better hardware
+ * @type {string}
+ */
+var OTHER_PROBLEM = '' +
+  "It doesn't appear your computer can support WebGL.<br/>" +
+  '<a href="http://get.webgl.org/troubleshooting/">Click here for more information.</a>';
+
+/**
+ * Creates a webgl context. If creation fails it will
+ * change the contents of the container of the <canvas>
+ * tag to an error message with the correct links for WebGL.
+ * @param {Element} canvas. The canvas element to create a
+ *     context from.
+ * @param {WebGLContextCreationAttirbutes} opt_attribs Any
+ *     creation attributes you want to pass in.
+ * @return {WebGLRenderingContext} The created context.
+ */
+var setupWebGL = function(canvas, opt_attribs) {
+	function showLink(str) {
+		var container = canvas.parentNode;
+		if (container) {
+			container.innerHTML = makeFailHTML(str);
+		}
+	};
+
+	if (!window.WebGLRenderingContext) {
+		showLink(GET_A_WEBGL_BROWSER);
+		return null;
+	}
+
+	var context = create3DContext(canvas, opt_attribs);
+	if (!context) {
+		showLink(OTHER_PROBLEM);
+	}
     
-    /**
-     * Message for getting a webgl browser
-     * @type {string}
-     */
-    var GET_A_WEBGL_BROWSER = '' +
-    'This page requires a browser that supports WebGL.<br/>' +
-    '<a href="http://get.webgl.org">Click here to upgrade your browser.</a>';
+    // Nickes nya:
+    //context.viewportWidth = canvas.width;
+    //context.viewportHeight = canvas.height;
+    context.viewport(0, 0, canvas.width, canvas.height);
+    return context;
+};
+
+/**
+ * Same as above, but creates a context without depth buffer and antialiasing
+ */
+var setupWebGL2D = function(canvas) {
+	return setupWebGL(canvas, {
+					  // alpha: true,
+					  depth: false, // true,
+					  // stencil: false,
+					  antialias: false, // true,
+					  // premultipliedAlpha: true,
+					  // preserveDrawingBuffer: false,
+					  });
+};
+	
+	
+/**
+ * Creates a webgl context.
+ * @param {!Canvas} canvas The canvas tag to get context
+ *     from. If one is not passed in one will be created.
+ * @return {!WebGLContext} The created context.
+ */
+var create3DContext = function(canvas, opt_attribs) {
+	var names = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
+	var context = null;
+	for (var ii = 0; ii < names.length; ++ii) {
+		try {
+			context = canvas.getContext(names[ii], opt_attribs);
+		} catch (e) {
+		}
+		if (context) {
+			break;
+		}
+	}
+	return context;
+}
+
+var createShader = function(gl, str, type) {
+	var shader = gl.createShader(type);
+	gl.shaderSource(shader, str);
+	gl.compileShader(shader);
+		
+	if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+		console.log(gl.getShaderInfoLog(shader));
+	}
+
+	return shader;
+}
+	
+var createProgram = function(gl, vstr, fstr) {
+	var program = gl.createProgram();
+	var vshader = createShader(gl, vstr, gl.VERTEX_SHADER);
+	var fshader = createShader(gl, fstr, gl.FRAGMENT_SHADER);
+	gl.attachShader(program, vshader);
+	gl.attachShader(program, fshader);
+	gl.linkProgram(program);
+	return program;
+}
+	
+var createTexture = function(gl) {
+		
+	var texture = gl.createTexture();
+		
+	// Bind the texture and set some properties
+	gl.bindTexture(gl.TEXTURE_2D, texture);
+	// gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+		
+	// These properties let you upload textures of any size
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		
+	// These determine how interpolation is made if the image is being scaled up or down
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); // NEAREST);
+
+	// Unbind the texture
+	gl.bindTexture(gl.TEXTURE_2D, null);
+		
+	return texture;
+}
     
-    /**
-     * Message for need better hardware
-     * @type {string}
-     */
-    var OTHER_PROBLEM = '' +
-    "It doesn't appear your computer can support WebGL.<br/>" +
-    '<a href="http://get.webgl.org/troubleshooting/">Click here for more information.</a>';
-    
-    /**
-     * Creates a webgl context. If creation fails it will
-     * change the contents of the container of the <canvas>
-     * tag to an error message with the correct links for WebGL.
-     * @param {Element} canvas. The canvas element to create a
-     *     context from.
-     * @param {WebGLContextCreationAttirbutes} opt_attribs Any
-     *     creation attributes you want to pass in.
-     * @return {WebGLRenderingContext} The created context.
-     */
-    var setupWebGL = function(canvas, opt_attribs) {
-        function showLink(str) {
-            var container = canvas.parentNode;
-            if (container) {
-                container.innerHTML = makeFailHTML(str);
-            }
-        };
-        
-        if (!window.WebGLRenderingContext) {
-            showLink(GET_A_WEBGL_BROWSER);
+    var shaderScriptToString = function(id) {
+        var shaderScript = document.getElementById(id);
+        if (!shaderScript) {
             return null;
         }
         
-        var context = create3DContext(canvas, opt_attribs);
-        if (!context) {
-            showLink(OTHER_PROBLEM);
+        var str = "";
+        var k = shaderScript.firstChild;
+        while (k) {
+            if (k.nodeType == 3)
+                str += k.textContent;
+            k = k.nextSibling;
         }
-        return context;
-    };
-    
-    /**
-     * Same as above, but creates a context without depth buffer and antialiasing
-     */
-    var setupWebGL2D = function(canvas) {
-        return setupWebGL(canvas, {
-                          // alpha: true,
-                          depth: false, // true,
-                          // stencil: false,
-                          antialias: false, // true,
-                          // premultipliedAlpha: true,
-                          // preserveDrawingBuffer: false,
-                          });
-    };
-	
-	
-    /**
-     * Creates a webgl context.
-     * @param {!Canvas} canvas The canvas tag to get context
-     *     from. If one is not passed in one will be created.
-     * @return {!WebGLContext} The created context.
-     */
-    var create3DContext = function(canvas, opt_attribs) {
-        var names = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
-        var context = null;
-        for (var ii = 0; ii < names.length; ++ii) {
-            try {
-                context = canvas.getContext(names[ii], opt_attribs);
-            } catch (e) {
-            }
-            if (context) {
-                break;
-            }
-        }
-        return context;
-    }
-    
-    var createShader = function(gl, str, type) {
-        var shader = gl.createShader(type);
-        gl.shaderSource(shader, str);
-        gl.compileShader(shader);
-		
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            console.log(gl.getShaderInfoLog(shader));
-        }
-        
-        return shader;
+        return  str;
     }
 	
-    var createProgram = function(gl, vstr, fstr) {
-        console.log(2);
-        console.log(vstr);
-        console.log(fstr);
-        
-        var program = gl.createProgram();
-        var vshader = createShader(gl, vstr, gl.VERTEX_SHADER);
-        var fshader = createShader(gl, fstr, gl.FRAGMENT_SHADER);
-        gl.attachShader(program, vshader);
-        gl.attachShader(program, fshader);
-        gl.linkProgram(program);
-        return program;
-    }
-	
-    var createTexture = function(gl) {
-		
-        var texture = gl.createTexture();
-		
-        // Bind the texture and set some properties
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-		
-        // These properties let you upload textures of any size
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-		
-        // These determine how interpolation is made if the image is being scaled up or down
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); // NEAREST);
-        
-        // Unbind the texture
-        gl.bindTexture(gl.TEXTURE_2D, null);
-		
-        return texture;
-    }
-	
-    return {
+return {
 	create3DContext: create3DContext,
 	setupWebGL: setupWebGL,
 	setupWebGL2D: setupWebGL2D,
 	createTexture: createTexture,
 	createProgram: createProgram,
 	createShader: createShader,
-    };
+	shaderScriptToString: shaderScriptToString
+};
 }();
 
 /**
  * Provides requestAnimationFrame in a cross browser way.
  */
 window.requestAnimFrame = (function() {
-                           return window.requestAnimationFrame ||
-                           window.webkitRequestAnimationFrame ||
-                           window.mozRequestAnimationFrame ||
-                           window.oRequestAnimationFrame ||
-                           window.msRequestAnimationFrame ||
-                           function(/* function FrameRequestCallback */ callback, /* DOMElement Element */ element) {
-                           return window.setTimeout(callback, 1000/60);
-                           };
-                           })();
+  return window.requestAnimationFrame ||
+         window.webkitRequestAnimationFrame ||
+         window.mozRequestAnimationFrame ||
+         window.oRequestAnimationFrame ||
+         window.msRequestAnimationFrame ||
+         function(/* function FrameRequestCallback */ callback, /* DOMElement Element */ element) {
+           return window.setTimeout(callback, 1000/60);
+         };
+})();
 
 /**
  * Provides cancelAnimationFrame in a cross browser way.
  */
 window.cancelAnimFrame = (function() {
-                          return window.cancelAnimationFrame ||
-                          window.webkitCancelAnimationFrame ||
-                          window.mozCancelAnimationFrame ||
-                          window.oCancelAnimationFrame ||
-                          window.msCancelAnimationFrame ||
-                          window.clearTimeout;
-                          })();
+  return window.cancelAnimationFrame ||
+         window.webkitCancelAnimationFrame ||
+         window.mozCancelAnimationFrame ||
+         window.oCancelAnimationFrame ||
+         window.msCancelAnimationFrame ||
+         window.clearTimeout;
+})();
 
 

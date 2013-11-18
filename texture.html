@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        <title>Nicke's WebGL</title>
+        
+        <script type="text/javascript" src="js/lib/webgl-utils.js"></script>
+        <script type="text/javascript" src="js/lib/glMatrix-0.9.5.min.js"></script>
+        
+        
+        <!------------->
+        <!-- Shaders -->
+        <!------------->
+        <script id="shader-vs" type="x-shader/x-vertex">
+            attribute vec3 aVertexPosition;
+            attribute vec2 aTextureCoord;
+            
+            uniform mat4 uMVMatrix;
+            uniform mat4 uPMatrix;
+            
+            varying vec2 vTextureCoord;
+            
+            void main(void) {
+            	gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+                vTextureCoord = aTextureCoord;
+            }
+        </script>
+        
+        <script id="shader-fs" type="x-shader/x-fragment">
+            precision mediump float;
+            
+            varying vec2 vTextureCoord;
+            uniform sampler2D uSampler;
+            
+            void main(void) {
+                gl_FragColor = texture2D(uSampler, vec2(vTextureCoord));
+            }
+        </script>
+        
+        <!---------------->
+        <!-- JavaScript -->
+        <!---------------->
+        <script type="text/javascript">
+            // Global variables
+            var gl;
+            var shaderProgram;
+            
+            var mvMatrix = mat4.create();
+            var pMatrix = mat4.create();
+            
+            var vertexPositionBuffer;
+            var textureCoordBuffer;
+            
+            var texture;
+            
+            function setMatrixUniforms() {
+                gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
+                gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+            }
+        
+        function initBuffers() {
+            // Position vertices
+            vertexPositionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+            var vertices = [
+                            0.0,  0.0,  0.0,
+                            1.0, 0.0,  0.0,
+                            0.0, 1.0,  0.0,
+                            1.0, 1.0,  0.0
+                            ];
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+            vertexPositionBuffer.itemSize = 3;
+            vertexPositionBuffer.numItems = vertices.length / vertexPositionBuffer.itemSize;
+
+			// Texture coordinates
+            textureCoordBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+            var textureCoords = [
+                0.0, 0.0,
+                1.0, 0.0,
+                0.0, 1.0,
+                1.0, 1.0
+            ];
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
+            textureCoordBuffer.itemSize = 2;
+            textureCoordBuffer.numItems = 4;
+        }
+        
+        
+        function drawScene() {
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            
+            var canvas = document.getElementById("canvas");
+            mat4.perspective(45, canvas.width / canvas.height, 0.1, 100.0, pMatrix);
+            
+            mat4.identity(mvMatrix);
+            mat4.translate(mvMatrix, [0, 0.0, -5.0]);
+            mat4.rotate(mvMatrix, Math.PI/4, [0, 1, 0]);
+            mat4.rotate(mvMatrix, Math.PI/6, [1, 0, 0]);
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+            gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+            gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, textureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+            
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.uniform1i(shaderProgram.samplerUniform, 0);
+            
+            setMatrixUniforms();
+            
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexPositionBuffer.numItems);
+        }
+        
+        function initTexture() {
+            var handleLoadedTexture = function(texture) {
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                //gl.bindTexture(gl.TEXTURE_2D, null);
+                drawScene();
+            }
+            texture = gl.createTexture();
+            image = new Image();
+            image.onload = function() {
+                handleLoadedTexture(texture)
+            }
+            image.src = "img/wolf.png";
+        }
+        
+        function webGLStart() {
+            // Get the WebGL context
+            var canvas = document.getElementById("canvas");
+            gl = WebGLUtils.setupWebGL(canvas);
+            
+            // Create and install the shader program
+            var vstr = WebGLUtils.shaderScriptToString("shader-vs");
+            var fstr = WebGLUtils.shaderScriptToString("shader-fs");
+            shaderProgram = WebGLUtils.createProgram(gl, vstr, fstr);
+            gl.useProgram(shaderProgram);
+            
+            // Set attributes
+            shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+            gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+            shaderProgram.textureCoordAttribute = gl.getAttribLocation(shaderProgram, "aTextureCoord");
+            gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
+            
+            // Set uniforms
+            shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+            shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+            shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+            
+            // Create the models
+            initBuffers();
+            
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.enable(gl.DEPTH_TEST);
+            
+            initTexture();
+            //drawScene();
+        }
+        </script>
+    </head>
+    
+    <body onload="webGLStart();">
+        <canvas id="canvas" style="border: none;" width="500" height="500">
+        </canvas>
+    </body>
+    
+</html>
