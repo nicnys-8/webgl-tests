@@ -47,7 +47,8 @@
             var pMatrix = mat4.create();
             
             var vertexPositionBuffer;
-            var vertexColorBuffer;;
+            var vertexColorBuffer;
+            var timer = 0.0;
             
             function setMatrixUniforms() {
                 gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
@@ -77,7 +78,7 @@
                 }
             	vertices[3 + j + 0] = x;
                 vertices[3 + j + 1] = y;
-                vertices[3 + j + 2] = 1.0;
+                vertices[3 + j + 2] = 0.5;
             }
             
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
@@ -122,7 +123,9 @@
             mat4.identity(mvMatrix);
             
             mat4.translate(mvMatrix, [0, 0.0, -5.0]);
-        	// mat4.rotate(mvMatrix, Math.PI/4, [0, 1, 0]);
+            var angle = 0.05 * timer;
+            timer++;
+        	mat4.rotate(mvMatrix, angle, [0, 1, 0]);
             
             gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
             gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -161,9 +164,14 @@
             gl.clearColor(0.0, 0.0, 0.0, 1.0);
             gl.enable(gl.DEPTH_TEST);
             
-            drawScene();
-            
+            //drawScene();
+            animate();
         }
+            
+            function animate() {
+                requestAnimFrame(animate);
+                drawScene();
+            }
         </script>
     </head>
     

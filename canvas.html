@@ -82,22 +82,22 @@
                             0.0, 1.0,  0.0,
                             1.0, 1.0,  0.0
                             ];
-                            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-                            vertexPositionBuffer.itemSize = 3;
-                            vertexPositionBuffer.numItems = vertices.length / vertexPositionBuffer.itemSize;
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+            vertexPositionBuffer.itemSize = 3;
+            vertexPositionBuffer.numItems = vertices.length / vertexPositionBuffer.itemSize;
                             
-                            // Texture coordinates
-                            textureCoordBuffer = gl.createBuffer();
-                            gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
-                            var textureCoords = [
-                                                 0.0, 0.0,
-                                                 1.0, 0.0,
-                                                 0.0, 1.0,
-                                                 1.0, 1.0
-                                                 ];
-                                                 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
-                                                 textureCoordBuffer.itemSize = 2;
-                                                 textureCoordBuffer.numItems = 4;
+            // Texture coordinates
+            textureCoordBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+            var textureCoords = [
+                                 0.0, 0.0,
+                                1.0, 0.0,
+                                0.0, 1.0,
+                                1.0, 1.0
+                                ];
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
+            textureCoordBuffer.itemSize = 2;
+            textureCoordBuffer.numItems = 4;
         }
         
         
@@ -133,7 +133,7 @@
             gl.bindTexture(gl.TEXTURE_2D, texture);
             gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+            //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
             
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
