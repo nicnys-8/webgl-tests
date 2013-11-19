@@ -122,7 +122,7 @@
             mat4.identity(mvMatrix);
             
             mat4.translate(mvMatrix, [0, 0.0, -5.0]);
-        	//mat4.rotate(mvMatrix, Math.PI/9, [0, 1, 0]);
+        	// mat4.rotate(mvMatrix, Math.PI/4, [0, 1, 0]);
             
             gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
             gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -162,6 +162,7 @@
             gl.enable(gl.DEPTH_TEST);
             
             drawScene();
+            
         }
         </script>
     </head>

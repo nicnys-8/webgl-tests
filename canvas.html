@@ -128,24 +128,18 @@
         }
         
         function initTexture() {
-            var handleLoadedTexture = function(texture) {
-                gl.bindTexture(gl.TEXTURE_2D, texture);
-                gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-                //gl.bindTexture(gl.TEXTURE_2D, null);
-                drawScene();
-            }
-            texture = gl.createTexture();
-            
             var canvas = document.getElementById("temp");
-            var image = new Image();
+            texture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
             
-            image.onload = function() {
-                handleLoadedTexture(texture)
-            }
-            image.src = canvas.toDataURL("image/png");
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            drawScene();
+            return;
         }
         
         function webGLStart() {
@@ -186,7 +180,7 @@
     <body onload="webGLStart();">
         <canvas id="canvas" style="border: none;" width="500" height="500">
         </canvas>
-        <canvas id="temp" width="256" height="500">
+        <canvas id="temp" width="500" height="500">
         </canvas>
     </body>
     
